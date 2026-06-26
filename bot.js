@@ -1,53 +1,57 @@
-
-const http = require('http')
-
-http.createServer((req, res) => {
-  res.writeHead(200)
-  res.end('Bot is running')
-}).listen(process.env.PORT || 3000)
-
 const mineflayer = require('mineflayer')
 
 const config = {
   host: 'VoidedSMP.aternos.me',
   port: 38491,
   username: 'AFK_Bot',
+  version: '1.21.8',
   reconnectDelay: 5000
 }
 
-let bot = null
+console.log("🚀 Bot starting...")
+
+let bot
 
 function createBot() {
+  console.log("📡 Connecting to VoidedSMP...")
+
   bot = mineflayer.createBot({
     host: config.host,
     port: config.port,
-    username: config.username
+    username: config.username,
+    version: config.version
   })
 
-  bot.on('spawn', () => {
-    console.log('[+] Bot joined server')
+  bot.once('login', () => {
+    console.log("🔑 Logged into server")
+  })
 
-    // simple anti-AFK movement
-    setInterval(() => {
-      if (!bot || !bot.entity) return
-      bot.setControlState('jump', true)
-      setTimeout(() => bot.setControlState('jump', false), 300)
-    }, 8000)
+  bot.once('spawn', () => {
+    console.log("✅ Bot spawned in world")
+  })
+
+  bot.on('message', (msg) => {
+    console.log("💬 Chat:", msg.toString())
   })
 
   bot.on('kicked', (reason) => {
-    console.log('[!] Kicked:', reason?.toString())
+    console.log("⛔ Kicked:", reason?.toString())
   })
 
   bot.on('error', (err) => {
-    console.log('[!] Error:', err.message)
+    console.log("❌ Error:", err?.message || err)
   })
 
   bot.on('end', () => {
-    console.log('[x] Disconnected. Reconnecting in', config.reconnectDelay / 1000, 's...')
+    console.log("🔌 Disconnected — retrying in 5s...")
     setTimeout(createBot, config.reconnectDelay)
   })
 }
 
-// start first connection
+// start bot
 createBot()
+
+// heartbeat so you KNOW it’s running
+setInterval(() => {
+  console.log("📡 Bot alive")
+}, 15000)
